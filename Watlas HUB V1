@@ -1,0 +1,132 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRoot = character:WaitForChild("HumanoidRootPart")
+local RunService = game:GetService("RunService")
+
+-- Criar GUI manualmente via script
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlatformGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Botão Hub (arredondado e maior)
+local hubButton = Instance.new("TextButton")
+hubButton.Name = "HubButton"
+hubButton.Size = UDim2.new(0, 100, 0, 100)
+hubButton.Position = UDim2.new(0, 20, 0, 100)
+hubButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+hubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+hubButton.Text = "Hub"
+hubButton.Font = Enum.Font.GothamBold
+hubButton.TextScaled = true
+hubButton.Active = true
+hubButton.Draggable = true
+hubButton.Parent = screenGui
+
+-- Arredondar o botão
+local hubUICorner = Instance.new("UICorner")
+hubUICorner.CornerRadius = UDim.new(1, 0)
+hubUICorner.Parent = hubButton
+
+-- Frame do Menu
+local menuFrame = Instance.new("Frame")
+menuFrame.Name = "MenuFrame"
+menuFrame.Size = UDim2.new(0, 200, 0, 140)
+menuFrame.Position = UDim2.new(0, 20, 0, 220)
+menuFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+menuFrame.Visible = false
+menuFrame.Parent = screenGui
+
+-- UICorner no menu
+local menuCorner = Instance.new("UICorner")
+menuCorner.CornerRadius = UDim.new(0, 10)
+menuCorner.Parent = menuFrame
+
+-- Texto RGB "Watlas Hub V1"
+local watlasLabel = Instance.new("TextButton")
+watlasLabel.Name = "WatlasLabel"
+watlasLabel.Size = UDim2.new(0, 180, 0, 30)
+watlasLabel.Position = UDim2.new(0, 10, 0, 5)
+watlasLabel.BackgroundTransparency = 1
+watlasLabel.Text = "Watlas Hub V1"
+watlasLabel.TextScaled = true
+watlasLabel.Font = Enum.Font.GothamBold
+watlasLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+watlasLabel.Parent = menuFrame
+
+-- Colorido RGB animado
+task.spawn(function()
+	local hue = 0
+	while true do
+		watlasLabel.TextColor3 = Color3.fromHSV(hue, 1, 1)
+		hue = (hue + 0.01) % 1
+		task.wait(0.03)
+	end
+end)
+
+-- Assinatura ao clicar no texto
+watlasLabel.MouseButton1Click:Connect(function()
+	game.StarterGui:SetCore("ChatMakeSystemMessage", {
+		Text = "🔮 Desenvolvido por Watlas - Versão 1.0";
+		Color = Color3.fromHSV(math.random(), 1, 1);
+		Font = Enum.Font.SourceSansBold;
+		FontSize = Enum.FontSize.Size24;
+	})
+end)
+
+-- Botão da Plataforma
+local plataformaButton = Instance.new("TextButton")
+plataformaButton.Name = "PlataformaButton"
+plataformaButton.Size = UDim2.new(0, 180, 0, 40)
+plataformaButton.Position = UDim2.new(0, 10, 0, 45)
+plataformaButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+plataformaButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+plataformaButton.Text = "Ativar Plataforma"
+plataformaButton.Font = Enum.Font.Gotham
+plataformaButton.TextScaled = true
+plataformaButton.Parent = menuFrame
+
+-- Criar a plataforma
+local plataforma = Instance.new("Part")
+plataforma.Size = Vector3.new(6, 1, 6)
+plataforma.Anchored = true
+plataforma.Transparency = 1
+plataforma.Color = Color3.fromRGB(0, 170, 255)
+plataforma.CanCollide = true
+plataforma.Name = "PlataformaADM"
+plataforma.Parent = workspace
+
+-- Estado
+local ativo = false
+
+-- Abrir e fechar o menu
+hubButton.MouseButton1Click:Connect(function()
+	menuFrame.Visible = not menuFrame.Visible
+end)
+
+-- Alternar ativação
+plataformaButton.MouseButton1Click:Connect(function()
+	ativo = not ativo
+	if ativo then
+		plataformaButton.Text = "Desativar Plataforma"
+		plataformaButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+		plataforma.Transparency = 0.3
+	else
+		plataformaButton.Text = "Ativar Plataforma"
+		plataformaButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+		plataforma.Transparency = 1
+	end
+end)
+
+-- Atualizar posição da plataforma
+RunService.RenderStepped:Connect(function()
+	if ativo and humanoidRoot and humanoidRoot.Parent then
+		plataforma.CFrame = humanoidRoot.CFrame * CFrame.new(0, -4, 0)
+	end
+end)
+
+-- Atualizar referência ao personagem se renascer
+player.CharacterAdded:Connect(function(char)
+	character = char
+	humanoidRoot = char:WaitForChild("HumanoidRootPart")
+end)
