@@ -1,0 +1,200 @@
+local player = game.Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- CONFIG
+local NORMAL_SPEED = 16
+local SPEED_MULTIPLIER = 1.5
+local PLATFORM_SIZE = Vector3.new(6,1,6)
+
+-- Estados
+local platform = nil
+local active = false
+
+-- Cria a plataforma
+local function createPlatform()
+	if platform and platform.Parent then return platform end
+	platform = Instance.new("Part")
+	platform.Size = PLATFORM_SIZE
+	platform.Anchored = true
+	platform.CanCollide = true
+	platform.Color = Color3.fromRGB(0,170,255)
+	platform.Transparency = 0.3
+	platform.Parent = workspace
+	return platform
+end
+
+-- Alternar ativação
+local function togglePlatform()
+	local char = player.Character
+	if not char then return end
+	local humanoid = char:FindFirstChild("Humanoid")
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not hrp then return end
+
+	active = not active
+	if active then
+		createPlatform()
+		humanoid.WalkSpeed = NORMAL_SPEED * SPEED_MULTIPLIER
+	else
+		if platform then
+			platform.Transparency = 1
+		end
+		humanoid.WalkSpeed = NORMAL_SPEED
+	end
+end
+
+-- Loop da plataforma e cor RGB
+RunService.RenderStepped:Connect(function()
+	if active and platform and player.Character then
+		local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+		local humanoid = player.Character:FindFirstChild("Humanoid")
+		if hrp and humanoid then
+			local yOffset = -humanoid.HipHeight - (platform.Size.Y/2) - 0.5
+			platform.CFrame = hrp.CFrame * CFrame.new(0, yOffset, 0)
+
+			-- cor arco-íris
+			local hue = tick() % 5 / 5
+			platform.Color = Color3.fromHSV(hue, 1, 1)
+		end
+	end
+end)
+
+------------------------------------
+-- 📱 GUI (Watlas Hub)
+------------------------------------
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "WatlasHub"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Função para deixar UI arrastável
+local function makeDraggable(frame)
+	local dragging = false
+	local dragInput, dragStart, startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	frame.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
+		end
+	end)
+end
+
+-- Botão HUB redondo
+local hubButton = Instance.new("TextButton")
+hubButton.Size = UDim2.new(0, 80, 0, 80)
+hubButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+hubButton.BackgroundColor3 = Color3.fromRGB(0,0,0)
+hubButton.Text = "Hub"
+hubButton.TextColor3 = Color3.fromRGB(255,255,255)
+hubButton.TextScaled = true
+hubButton.Font = Enum.Font.GothamBold
+hubButton.Parent = gui
+hubButton.AutoButtonColor = false
+makeDraggable(hubButton)
+
+local round = Instance.new("UICorner", hubButton)
+round.CornerRadius = UDim.new(1,0)
+
+-- Menu principal
+local menuFrame = Instance.new("Frame")
+menuFrame.Size = UDim2.new(0, 260, 0, 220)
+menuFrame.Position = UDim2.new(0.5, -130, 0.5, -110)
+menuFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+menuFrame.Visible = false
+menuFrame.Parent = gui
+makeDraggable(menuFrame)
+
+local uiCorner = Instance.new("UICorner", menuFrame)
+uiCorner.CornerRadius = UDim.new(0,15)
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,40)
+title.Text = "Watlas Hub"
+title.TextColor3 = Color3.fromRGB(255,0,0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+title.Parent = menuFrame
+
+-- Botão ativar plataforma
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0.8,0,0,50)
+toggleBtn.Position = UDim2.new(0.1,0,0.3,0)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+toggleBtn.Text = "Ativar Plataforma"
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextScaled = true
+toggleBtn.Parent = menuFrame
+local corner2 = Instance.new("UICorner", toggleBtn)
+corner2.CornerRadius = UDim.new(0,10)
+
+-- Assinatura
+local assinatura = Instance.new("TextLabel")
+assinatura.Size = UDim2.new(1,0,0,50)
+assinatura.Position = UDim2.new(0,0,0.75,0)
+assinatura.Text = "ttk:@watlasuhh\n dc:watlasuhh"
+assinatura.TextColor3 = Color3.new(1,1,1)
+assinatura.Font = Enum.Font.Gotham
+assinatura.TextScaled = true
+assinatura.BackgroundTransparency = 1
+assinatura.Parent = menuFrame
+
+-- Abrir/fechar menu
+hubButton.Activated:Connect(function()
+	menuFrame.Visible = not menuFrame.Visible
+end)
+
+-- Botão de ativar plataforma
+toggleBtn.Activated:Connect(function()
+	togglePlatform()
+	if active then
+		toggleBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
+	else
+		toggleBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+	end
+end)
+
+-- Rainbow no título e assinatura
+RunService.RenderStepped:Connect(function()
+	if menuFrame.Visible then
+		local hue = tick() % 5 / 5
+		local color = Color3.fromHSV(hue, 1, 1)
+		title.TextColor3 = color
+		assinatura.TextColor3 = color
+	end
+end)
